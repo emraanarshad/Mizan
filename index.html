@@ -6,10 +6,8 @@
     <title>Mizan</title>
     
     <link rel="manifest" href="manifest.json">
-    <!-- PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- Firebase SDKs (Compat Versions for Easy Integration) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
@@ -87,7 +85,7 @@
         
         <div id="custList"></div>
         
-        <button class="btn btn-backup" id="btnBackup" onclick="exportToCSV()">📥 بیک اپ ڈاؤن لوڈ کریں (Excel File)</button>
+        <button class="btn btn-backup" id="btnBackup" onclick="exportToCSV()">📥 بیک اپ ڈاؤن لوڈ کریں (CSV/Excel)</button>
         
         <label for="restoreFile" class="btn btn-restore" id="lblRestore">📤 پرانا ڈیٹا واپس لوڈ کریں (CSV File)</label>
         <input type="file" id="restoreFile" accept=".csv" onchange="importFromCSV(this)" style="display: none;">
@@ -153,15 +151,14 @@
 
     const langData = {
         ur: {
-            dir: "rtl", mainTitle: "میزان", subTitle: "ڈیجیٹل لیجر بک", newCustName: "کسٹمر کا نام لکھیں...", btnAddCust: "+ نیا کسٹمر شامل کریں", searchBar: "تلاش کریں (Search)...", btnBackup: "📥 بیک اپ ڈاؤن لوڈ کریں (Excel File)", lblRestore: "📤 پرانا ڈیٹا واپس لوڈ کریں (CSV File)", billNo: "بل نمبر (Bill No)", transNote: "تفصیل (Note)", transAmount: "رقم (Amount)", btnCredit: "Credit (جمع)", btnDebit: "Debit (بنام)", btnPdfDownload: "📄 PDF Bill ڈاؤن لوڈ کریں", btnWhatsapp: "💬 WhatsApp پر تفصیل بھیجیں", btnDeleteCust: "🗑️ کسٹمر ریکارڈ ختم کریں", tableHeader: "<th>تفصیل / تاریخ</th><th>رقم</th>", debitTxt: "Debit (بنام)", creditTxt: "Credit (جمع)", clearTxt: "Clear", backArrow: "➜", msgSuccess: "Mubarak ho! Saara purana data kamyabi se load ho gaya hai.", msgFormat: "Format sahi nahi hai!", msgConfirm: "Are you sure? Mukammal record khatam ho jaye ga."
+            dir: "rtl", mainTitle: "میزان", subTitle: "ڈیجیٹل لیجر بک", newCustName: "کسٹمر کا نام لکھیں...", btnAddCust: "+ نیا کسٹمر شامل کریں", searchBar: "تلاش کریں (Search)...", btnBackup: "📥 بیک اپ ڈاؤن لوڈ کریں (CSV/Excel)", lblRestore: "📤 پرانا ڈیٹا واپس لوڈ کریں (CSV File)", billNo: "بل نمبر (Bill No)", transNote: "تفصیل (Note)", transAmount: "رقم (Amount)", btnCredit: "Credit (جمع)", btnDebit: "Debit (بنام)", btnPdfDownload: "📄 PDF Bill ڈاؤن لوڈ کریں", btnWhatsapp: "💬 WhatsApp پر تفصیل بھیجیں", btnDeleteCust: "🗑️ کسٹمر ریکارڈ ختم کریں", tableHeader: "<th>تفصیل / تاریخ</th><th>رقم</th>", debitTxt: "Debit (بنام)", creditTxt: "Credit (جمع)", clearTxt: "Clear", backArrow: "➜", msgSuccess: "مبارک ہو! سارا پرانا ڈیٹا کامیابی سے لوڈ ہو گیا ہے۔", msgFormat: "فائل کا فارمیٹ درست نہیں ہے!", msgConfirm: "کیا آپ واقعی اس کسٹمر کا مکمل ریکارڈ ختم کرنا چاہتے ہیں؟"
         },
         en: {
-            dir: "ltr", mainTitle: "Mizan", subTitle: "Digital Ledger Book", newCustName: "Enter Customer Name...", btnAddCust: "+ Add New Customer", searchBar: "Search...", btnBackup: "📥 Download Backup (Excel File)", lblRestore: "📤 Restore Old Data (CSV File)", billNo: "Bill No", transNote: "Description / Note", transAmount: "Amount", btnCredit: "Credit (Received)", btnDebit: "Debit (Given)", btnPdfDownload: "📄 Download PDF Bill", btnWhatsapp: "💬 Send Details via WhatsApp", btnDeleteCust: "🗑️ Delete Customer Record", tableHeader: "<th>Description / Date</th><th>Amount</th>", debitTxt: "Debit", creditTxt: "Credit", clearTxt: "Clear", backArrow: "⬅", msgSuccess: "Success! All old data loaded successfully.", msgFormat: "Invalid format!", msgConfirm: "Are you sure you want to permanently delete this customer?"
+            dir: "ltr", mainTitle: "Mizan", subTitle: "Digital Ledger Book", newCustName: "Enter Customer Name...", btnAddCust: "+ Add New Customer", searchBar: "Search...", btnBackup: "📥 Download Backup (CSV/Excel)", lblRestore: "📤 Restore Old Data (CSV File)", billNo: "Bill No", transNote: "Description / Note", transAmount: "Amount", btnCredit: "Credit (Received)", btnDebit: "Debit (Given)", btnPdfDownload: "📄 Download PDF Bill", btnWhatsapp: "💬 Send Details via WhatsApp", btnDeleteCust: "🗑️ Delete Customer Record", tableHeader: "<th>Description / Date</th><th>Amount</th>", debitTxt: "Debit", creditTxt: "Credit", clearTxt: "Clear", backArrow: "⬅", msgSuccess: "Success! All old data loaded successfully.", msgFormat: "Invalid format!", msgConfirm: "Are you sure you want to permanently delete this customer?"
         }
     };
 
     window.onload = function() {
-        // First load from local storage for fast response
         localKhataData = JSON.parse(localStorage.getItem(DB_NAME)) || {};
         loadHome();
 
@@ -218,7 +215,7 @@
     function addCustomer() {
         let name = document.getElementById('newCustName').value.trim();
         if(!name) return;
-        if(!localKhataData[name]) localKhataData[name] = ["empty_init"]; // Firebase removes empty arrays, so using dummy
+        if(!localKhataData[name]) localKhataData[name] = ["empty_init"]; 
         syncToFirebase();
         document.getElementById('newCustName').value = "";
         loadHome();
@@ -274,7 +271,6 @@
         if (!Array.isArray(localKhataData[currentCustomer])) {
             localKhataData[currentCustomer] = [];
         }
-        // Remove dummy initializer if present
         localKhataData[currentCustomer] = localKhataData[currentCustomer].filter(x => x !== "empty_init");
 
         localKhataData[currentCustomer].push({ amount: amt, note: note, bill: bill, type: type, date: dateStr });
@@ -358,7 +354,10 @@
             if(Array.isArray(list)) {
                 list.forEach(t => {
                     if(t && t !== "empty_init") {
-                        csvContent += `${name},${t.note},${t.bill},${t.amount},${t.type},${t.date}\n`;
+                        let safeName = name.replace(/"/g, '""');
+                        let safeNote = t.note.replace(/"/g, '""');
+                        let safeBill = t.bill.replace(/"/g, '""');
+                        csvContent += `"${safeName}","${safeNote}","${safeBill}",${t.amount},${t.type},"${t.date}"\n`;
                     }
                 });
             }
@@ -367,7 +366,7 @@
         let url = URL.createObjectURL(blob);
         let link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", "Leather_Khata_Backup.csv");
+        link.setAttribute("download", "Mizan_Khata_Backup.csv");
         link.click();
     }
 
@@ -385,15 +384,16 @@
                 let line = lines[i].trim();
                 if (!line) continue;
 
-                let parts = line.split(',');
+                // Simple regex to parse CSV with quotes properly
+                let parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
                 if (parts.length < 6) continue;
 
-                let customer = parts[0].trim();
-                let note = parts[1].trim();
-                let bill = parts[2].trim();
-                let amount = parts[3].trim();
-                let type = parts[4].trim();
-                let date = parts[5].trim();
+                let customer = parts[0].replace(/^"|"$/g, '').trim();
+                let note = parts[1].replace(/^"|"$/g, '').trim();
+                let bill = parts[2].replace(/^"|"$/g, '').trim();
+                let amount = parts[3].replace(/^"|"$/g, '').trim();
+                let type = parts[4].replace(/^"|"$/g, '').trim();
+                let date = parts[5].replace(/^"|"$/g, '').trim();
 
                 if (!importedData[customer]) { importedData[customer] = []; }
                 importedData[customer].push({ amount: amount, note: note, bill: bill, type: type, date: date });
