@@ -6,7 +6,12 @@
     <title>Mizan</title>
     
     <link rel="manifest" href="manifest.json">
+    <!-- PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Firebase SDKs (Compat Versions for Easy Integration) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <style>
         :root { --primary: #e67e22; --secondary: #f1c40f; --dark: #2c3e50; }
@@ -20,7 +25,6 @@
             position: relative;
         }
         
-        /* Language Button Style */
         .lang-btn {
             position: absolute; top: 15px; left: 15px;
             background: rgba(255,255,255,0.2); color: white;
@@ -40,7 +44,6 @@
         .container { padding: 15px; max-width: 500px; margin: auto; }
         input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
         
-        /* RTL / LTR Text alignment classes */
         .text-lang { text-align: right; }
         .en-mode .text-lang { text-align: left; }
 
@@ -72,7 +75,6 @@
 <div id="homeView">
     <div class="header">
         <button class="lang-btn" onclick="toggleLanguage()">English / اردو</button>
-        
         <img src="icon.png" class="app-logo" alt="Mizan Logo">
         <h1 style="margin:0; letter-spacing: 1px;" id="mainTitle">میزان</h1>
         <small style="opacity: 0.8;" id="subTitle">ڈیجیٹل لیجر بک</small>
@@ -130,73 +132,59 @@
 <script>
     let currentCustomer = "";
     const DB_NAME = 'mizan_db_v1'; 
-    let currentLang = "ur"; // default language Urdu
+    let currentLang = "ur"; 
+    let localKhataData = {};
 
-    // Dictionary for Language text
+    // YOUR FIREBASE CONFIGURATION
+    const firebaseConfig = {
+        apiKey: "AIzaSyBzc7uxaYS42gW9m5Y4FGChWEcD7iToGcg",
+        authDomain: "mizan-khata.firebaseapp.com",
+        databaseURL: "https://mizan-khata-default-rtdb.firebaseio.com",
+        projectId: "mizan-khata",
+        storageBucket: "mizan-khata.appspot.com",
+        messagingSenderId: "102316949984",
+        appId: "1:102316949984:web:a1dca4d4484030fcfdaf91",
+        measurementId: "G-K7DYBNTTZ"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     const langData = {
         ur: {
-            dir: "rtl",
-            mainTitle: "میزان",
-            subTitle: "ڈیجیٹل لیجر بک",
-            newCustName: "کسٹمر کا نام لکھیں...",
-            btnAddCust: "+ نیا کسٹمر شامل کریں",
-            searchBar: "تلاش کریں (Search)...",
-            btnBackup: "📥 بیک اپ ڈاؤن لوڈ کریں (Excel File)",
-            lblRestore: "📤 پرانا ڈیٹا واپس لوڈ کریں (CSV File)",
-            billNo: "بل نمبر (Bill No)",
-            transNote: "تفصیل (Note)",
-            transAmount: "رقم (Amount)",
-            btnCredit: "Credit (جمع)",
-            btnDebit: "Debit (بنام)",
-            btnPdfDownload: "📄 PDF Bill ڈاؤن لوڈ کریں",
-            btnWhatsapp: "💬 WhatsApp پر تفصیل بھیجیں",
-            btnDeleteCust: "🗑️ کسٹمر ریکارڈ ختم کریں",
-            tableHeader: "<th>تفصیل / تاریخ</th><th>رقم</th>",
-            debitTxt: "Debit (بنام)",
-            creditTxt: "Credit (جمع)",
-            clearTxt: "Clear",
-            backArrow: "➜",
-            msgSuccess: "Mubarak ho! Saara purana data kamyabi se load ho gaya hai.",
-            msgFormat: "Format sahi nahi hai!",
-            msgConfirm: "Are you sure? Mukammal record khatam ho jaye ga."
+            dir: "rtl", mainTitle: "میزان", subTitle: "ڈیجیٹل لیجر بک", newCustName: "کسٹمر کا نام لکھیں...", btnAddCust: "+ نیا کسٹمر شامل کریں", searchBar: "تلاش کریں (Search)...", btnBackup: "📥 بیک اپ ڈاؤن لوڈ کریں (Excel File)", lblRestore: "📤 پرانا ڈیٹا واپس لوڈ کریں (CSV File)", billNo: "بل نمبر (Bill No)", transNote: "تفصیل (Note)", transAmount: "رقم (Amount)", btnCredit: "Credit (جمع)", btnDebit: "Debit (بنام)", btnPdfDownload: "📄 PDF Bill ڈاؤن لوڈ کریں", btnWhatsapp: "💬 WhatsApp پر تفصیل بھیجیں", btnDeleteCust: "🗑️ کسٹمر ریکارڈ ختم کریں", tableHeader: "<th>تفصیل / تاریخ</th><th>رقم</th>", debitTxt: "Debit (بنام)", creditTxt: "Credit (جمع)", clearTxt: "Clear", backArrow: "➜", msgSuccess: "Mubarak ho! Saara purana data kamyabi se load ho gaya hai.", msgFormat: "Format sahi nahi hai!", msgConfirm: "Are you sure? Mukammal record khatam ho jaye ga."
         },
         en: {
-            dir: "ltr",
-            mainTitle: "Mizan",
-            subTitle: "Digital Ledger Book",
-            newCustName: "Enter Customer Name...",
-            btnAddCust: "+ Add New Customer",
-            searchBar: "Search...",
-            btnBackup: "📥 Download Backup (Excel File)",
-            lblRestore: "📤 Restore Old Data (CSV File)",
-            billNo: "Bill No",
-            transNote: "Description / Note",
-            transAmount: "Amount",
-            btnCredit: "Credit (Received)",
-            btnDebit: "Debit (Given)",
-            btnPdfDownload: "📄 Download PDF Bill",
-            btnWhatsapp: "💬 Send Details via WhatsApp",
-            btnDeleteCust: "🗑️ Delete Customer Record",
-            tableHeader: "<th>Description / Date</th><th>Amount</th>",
-            debitTxt: "Debit",
-            creditTxt: "Credit",
-            clearTxt: "Clear",
-            backArrow: " canba", // left arrow entity handled dynamically
-            msgSuccess: "Success! All old data loaded successfully.",
-            msgFormat: "Invalid format!",
-            msgConfirm: "Are you sure you want to permanently delete this customer?"
+            dir: "ltr", mainTitle: "Mizan", subTitle: "Digital Ledger Book", newCustName: "Enter Customer Name...", btnAddCust: "+ Add New Customer", searchBar: "Search...", btnBackup: "📥 Download Backup (Excel File)", lblRestore: "📤 Restore Old Data (CSV File)", billNo: "Bill No", transNote: "Description / Note", transAmount: "Amount", btnCredit: "Credit (Received)", btnDebit: "Debit (Given)", btnPdfDownload: "📄 Download PDF Bill", btnWhatsapp: "💬 Send Details via WhatsApp", btnDeleteCust: "🗑️ Delete Customer Record", tableHeader: "<th>Description / Date</th><th>Amount</th>", debitTxt: "Debit", creditTxt: "Credit", clearTxt: "Clear", backArrow: "⬅", msgSuccess: "Success! All old data loaded successfully.", msgFormat: "Invalid format!", msgConfirm: "Are you sure you want to permanently delete this customer?"
         }
     };
 
     window.onload = function() {
+        // First load from local storage for fast response
+        localKhataData = JSON.parse(localStorage.getItem(DB_NAME)) || {};
         loadHome();
+
+        // Sync with Live Firebase Database Online
+        database.ref('khataData').on('value', (snapshot) => {
+            if (snapshot.exists()) {
+                localKhataData = snapshot.val();
+                localStorage.setItem(DB_NAME, JSON.stringify(localKhataData));
+                loadHome();
+                if (currentCustomer) { loadTransactions(); }
+            }
+        });
     };
+
+    function syncToFirebase() {
+        database.ref('khataData').set(localKhataData);
+        localStorage.setItem(DB_NAME, JSON.stringify(localKhataData));
+    }
 
     function toggleLanguage() {
         currentLang = (currentLang === "ur") ? "en" : "ur";
         const appHtml = document.getElementById('appHtml');
         
-        // Apply Direction and Classes
         appHtml.setAttribute('dir', langData[currentLang].dir);
         if(currentLang === 'en') {
             appHtml.classList.add('en-mode');
@@ -206,7 +194,6 @@
             document.getElementById('backBtn').innerText = "➜";
         }
 
-        // Apply Translations
         document.getElementById('mainTitle').innerText = langData[currentLang].mainTitle;
         document.getElementById('subTitle').innerText = langData[currentLang].subTitle;
         document.getElementById('newCustName').placeholder = langData[currentLang].newCustName;
@@ -225,29 +212,30 @@
         document.getElementById('tableHeader').innerHTML = langData[currentLang].tableHeader;
 
         loadHome();
-        if(currentCustomer) {
-            loadTransactions();
-        }
+        if(currentCustomer) { loadTransactions(); }
     }
 
     function addCustomer() {
         let name = document.getElementById('newCustName').value.trim();
         if(!name) return;
-        let data = JSON.parse(localStorage.getItem(DB_NAME)) || {};
-        if(!data[name]) data[name] = [];
-        localStorage.setItem(DB_NAME, JSON.stringify(data));
+        if(!localKhataData[name]) localKhataData[name] = ["empty_init"]; // Firebase removes empty arrays, so using dummy
+        syncToFirebase();
         document.getElementById('newCustName').value = "";
         loadHome();
     }
 
     function loadHome() {
-        let data = JSON.parse(localStorage.getItem(DB_NAME)) || {};
         let search = document.getElementById('searchBar').value.toLowerCase();
         let html = "";
-        for(let name in data) {
+        for(let name in localKhataData) {
             if(name.toLowerCase().includes(search)) {
                 let bal = 0;
-                data[name].forEach(t => bal += (t.type=='give' ? parseFloat(t.amount) : -parseFloat(t.amount)));
+                let list = localKhataData[name];
+                if (Array.isArray(list)) {
+                    list.forEach(t => {
+                        if(t && t !== "empty_init") bal += (t.type=='give' ? parseFloat(t.amount) : -parseFloat(t.amount));
+                    });
+                }
                 
                 let text = bal > 0 ? langData[currentLang].debitTxt : (bal < 0 ? langData[currentLang].creditTxt : langData[currentLang].clearTxt);
                 let color = bal > 0 ? "#c0392b" : (bal < 0 ? "#27ae60" : "gray");
@@ -268,50 +256,6 @@
         loadTransactions();
     }
 
-    function importFromCSV(input) {
-        const file = input.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const text = e.target.result;
-            const lines = text.split('\n');
-            let importedData = {};
-
-            for (let i = 1; i < lines.length; i++) {
-                let line = lines[i].trim();
-                if (!line) continue;
-
-                let parts = line.split(',');
-                if (parts.length < 6) continue;
-
-                let customer = parts[0].trim();
-                let note = parts[1].trim();
-                let bill = parts[2].trim();
-                let amount = parts[3].trim();
-                let type = parts[4].trim();
-                let date = parts[5].trim();
-
-                if (!importedData[customer]) {
-                    importedData[customer] = [];
-                }
-
-                importedData[customer].push({
-                    amount: amount, note: note, bill: bill, type: type, date: date
-                });
-            }
-
-            if (Object.keys(importedData).length > 0) {
-                localStorage.setItem(DB_NAME, JSON.stringify(importedData));
-                alert(langData[currentLang].msgSuccess);
-                loadHome();
-            } else {
-                alert(langData[currentLang].msgFormat);
-            }
-        };
-        reader.readAsText(file);
-    }
-
     function goBack() { 
         document.getElementById('homeView').style.display = "block";
         document.getElementById('detailsView').style.display = "none";
@@ -327,9 +271,15 @@
         let now = new Date();
         let dateStr = now.toLocaleDateString('en-GB') + " " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
-        let data = JSON.parse(localStorage.getItem(DB_NAME));
-        data[currentCustomer].push({ amount: amt, note: note, bill: bill, type: type, date: dateStr });
-        localStorage.setItem(DB_NAME, JSON.stringify(data));
+        if (!Array.isArray(localKhataData[currentCustomer])) {
+            localKhataData[currentCustomer] = [];
+        }
+        // Remove dummy initializer if present
+        localKhataData[currentCustomer] = localKhataData[currentCustomer].filter(x => x !== "empty_init");
+
+        localKhataData[currentCustomer].push({ amount: amt, note: note, bill: bill, type: type, date: dateStr });
+        syncToFirebase();
+        
         document.getElementById('transAmount').value = "";
         document.getElementById('transNote').value = "";
         document.getElementById('billNo').value = "";
@@ -337,24 +287,25 @@
     }
 
     function loadTransactions() {
-        let data = JSON.parse(localStorage.getItem(DB_NAME));
-        let history = data[currentCustomer] || [];
+        let history = localKhataData[currentCustomer] || [];
         let html = ""; let bal = 0;
         history.slice().reverse().forEach(t => {
-            let isGive = t.type == 'give';
-            bal += isGive ? parseFloat(t.amount) : -parseFloat(t.amount);
-            
-            let alignStyle = (currentLang === 'ur') ? 'text-align:right;' : 'text-align:left;';
-            html += `<tr>
-                <td style="${alignStyle}">
-                    <small style="color:#7f8c8d;">Bill: ${t.bill}</small><br>
-                    <strong>${t.note}</strong><br>
-                    <small style="color:#999; font-size:10px;">${t.date}</small>
-                </td>
-                <td style="color:${isGive?'#c0392b':'#27ae60'}; font-weight:bold; font-size:16px;">
-                    ${isGive ? 'DR' : 'CR'} ${t.amount}
-                </td>
-            </tr>`;
+            if(t && t !== "empty_init") {
+                let isGive = t.type == 'give';
+                bal += isGive ? parseFloat(t.amount) : -parseFloat(t.amount);
+                
+                let alignStyle = (currentLang === 'ur') ? 'text-align:right;' : 'text-align:left;';
+                html += `<tr>
+                    <td style="${alignStyle}">
+                        <small style="color:#7f8c8d;">Bill: ${t.bill}</small><br>
+                        <strong>${t.note}</strong><br>
+                        <small style="color:#999; font-size:10px;">${t.date}</small>
+                    </td>
+                    <td style="color:${isGive?'#c0392b':'#27ae60'}; font-weight:bold; font-size:16px;">
+                        ${isGive ? 'DR' : 'CR'} ${t.amount}
+                    </td>
+                </tr>`;
+            }
         });
         document.getElementById('historyBody').innerHTML = html;
         let statusText = bal > 0 ? `${langData[currentLang].debitTxt}: ${Math.abs(bal)}` : (bal < 0 ? `${langData[currentLang].creditTxt}: ${Math.abs(bal)}` : langData[currentLang].clearTxt);
@@ -363,8 +314,10 @@
 
     function shareWhatsApp() {
         let status = document.getElementById('statusLabel').innerText;
-        let data = JSON.parse(localStorage.getItem(DB_NAME));
-        let lastEntry = data[currentCustomer][data[currentCustomer].length - 1] || {};
+        let history = localKhataData[currentCustomer] || [];
+        let validEntries = history.filter(x => x !== "empty_init");
+        let lastEntry = validEntries[validEntries.length - 1] || {};
+        
         let headTxt = (currentLang === 'ur') ? '*میزان*' : '*Mizan App*';
         let custTxt = (currentLang === 'ur') ? 'کسٹمر' : 'Customer';
         let lastN = (currentLang === 'ur') ? 'آخری تفصیل' : 'Last Note';
@@ -398,13 +351,17 @@
     }
 
     function exportToCSV() {
-        let data = JSON.parse(localStorage.getItem(DB_NAME));
-        if(!data || Object.keys(data).length === 0) { alert("Data Empty!"); return; }
+        if(!localKhataData || Object.keys(localKhataData).length === 0) { alert("Data Empty!"); return; }
         let csvContent = "\ufeffCustomer,Note,Bill,Amount,Type,Date\n";
-        for(let name in data) {
-            data[name].forEach(t => {
-                csvContent += `${name},${t.note},${t.bill},${t.amount},${t.type},${t.date}\n`;
-            });
+        for(let name in localKhataData) {
+            let list = localKhataData[name];
+            if(Array.isArray(list)) {
+                list.forEach(t => {
+                    if(t && t !== "empty_init") {
+                        csvContent += `${name},${t.note},${t.bill},${t.amount},${t.type},${t.date}\n`;
+                    }
+                });
+            }
         }
         let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         let url = URL.createObjectURL(blob);
@@ -414,11 +371,50 @@
         link.click();
     }
 
+    function importFromCSV(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const text = e.target.result;
+            const lines = text.split('\n');
+            let importedData = {};
+
+            for (let i = 1; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (!line) continue;
+
+                let parts = line.split(',');
+                if (parts.length < 6) continue;
+
+                let customer = parts[0].trim();
+                let note = parts[1].trim();
+                let bill = parts[2].trim();
+                let amount = parts[3].trim();
+                let type = parts[4].trim();
+                let date = parts[5].trim();
+
+                if (!importedData[customer]) { importedData[customer] = []; }
+                importedData[customer].push({ amount: amount, note: note, bill: bill, type: type, date: date });
+            }
+
+            if (Object.keys(importedData).length > 0) {
+                localKhataData = importedData;
+                syncToFirebase();
+                alert(langData[currentLang].msgSuccess);
+                loadHome();
+            } else {
+                alert(langData[currentLang].msgFormat);
+            }
+        };
+        reader.readAsText(file);
+    }
+
     function deleteCustomer() {
         if(confirm(langData[currentLang].msgConfirm)) {
-            let data = JSON.parse(localStorage.getItem(DB_NAME));
-            delete data[currentCustomer];
-            localStorage.setItem(DB_NAME, JSON.stringify(data));
+            delete localKhataData[currentCustomer];
+            syncToFirebase();
             goBack();
         }
     }
